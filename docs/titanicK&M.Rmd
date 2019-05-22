@@ -1,0 +1,28 @@
+---
+title: "Tipologia i cicle de dades. Pràctica 2"
+author: "Marcos F. Vilaboa & Joaquim Salomon"
+date: "22 de mayo de 2019"
+output: 
+  pdf_document: 
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    latex_engine: xelatex
+  word_document: 
+    toc: true
+    toc_depth: 3
+    number_sections: true
+  html_document: 
+    toc: true
+    toc_depth: 3
+    number_sections: true
+lang: ca
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+___
+
+_*Introducció*_
