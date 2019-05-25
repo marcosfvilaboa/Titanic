@@ -25,4 +25,116 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ___
 
-_*Introducció*_
+# Introducció
+En aquesta pràctica s’elabora un cas pràctic orientat a aprendre a identificar les dades rellevants per un projecte analític i usar les eines d’integració, neteja, validació i anàlisi de les mateixes.
+
+## Competències
+En aquesta pràctica es desenvolupen les següents competències del Màster de Data Science:
+- Capacitat d'analitzar un problema en el nivell d'abstracció adequat a cada situació i aplicar les habilitats i coneixements adquirits per abordar-lo i resoldre'l.
+- Capacitat per aplicar les tècniques específiques de tractament de dades (integració, transformació, neteja i validació) per al seu posterior anàlisi.
+
+## Objectius
+Els objectius concrets d’aquesta pràctica són:
+
+- Aprendre a aplicar els coneixements adquirits i la seva capacitat de resolució de problemes en entorns nous o poc coneguts dintre de contextos més amplis o multidisciplinaris.
+
+- Saber identificar les dades rellevants i els tractaments necessaris (integració, neteja i validació) per dur a terme un projecte analític.
+
+- Aprendre a analitzar les dades adequadament per abordar la informació continguda en les dades.
+
+- Identificar la millor representació dels resultats per tal d’aportar conclusions sobre el problema plantejat en el procés analític.
+
+- Actuar amb els principis ètics i legals relacionats amb la manipulació de dades en funció de l'àmbit d'aplicació.
+
+- Desenvolupar les habilitats d'aprenentatge que els permetin continuar estudiant d'una manera que haurà de ser en gran manera autodirigida o autònoma.
+
+- Desenvolupar la capacitat de cerca, gestió i ús d'informació i recursos en l'àmbit de la ciència de dades.
+
+# Resolució
+## Descripció del *dataset*
+El conjunt de dades utilitzat en el present anàlisi s'ha extret de la web [kaggle.com](https://www.kaggle.com "Pàgina principal de Kaggle"). Concretament s'ha utilitzat el *set* d'entrenament (train.csv) que forma part del total de dades de Titanic: Machine Learning from Disaster (<https://www.kaggle.com/c/titanic/data>).
+
+### Càrrega inicial de dades
+Per tal de descriure el conjunt, realitzarem una càrrega inicial de les dades amb R:
+```{r}
+titanic.original <- read.csv("~/R/TCVD/Titanic/data/titanic_train.csv", header=TRUE)
+str(titanic.original)
+```
+
+Inicialment, el *dataset* es composa de 12 variables (columnes) amb un total de 891 observacions (registreS). 
+
+### Descripció de les variables
+La definició de cada camp és la següent:
+
+- _**PassengerId**_ (*int*): identificador únic del passatger (i de cada registre).
+
+- _**Survived**_ (*int*): si el passatger va sobreviure o no. "0" = No i "1" = Si
+  
+- _**Pclass**_ (*int*): classe del bitllet d'embarcament. "1" = primera classe, "2" = segona i "3" = tercera.
+  
+- _**Name**_ (*int*): nom del passatger. Inclou el títol com "Mr.", "Mrs.", "Dr.", ...
+  
+- _**Sex**_ (*Factor*): gènere del passatger. "female" = dona i "male" = home. 
+
+- _**Age**_ (*num*): edat.
+
+- _**SibSp**_ (*Factor*): nombre de germans i cònjuges a bord.
+
+- _**Parch**_ (*int*): nombre de pares i fills a bord.
+
+- _**Ticket**_ (*Factor*): número de tiquet.
+
+- _**Fare**_ (*num*): tarifa del passatger.
+
+- _**Cabin**_ (*Factor*): número de camarot. Consta d'una lletra que significa la coberta i el número de camarot: "A10", "C85",...
+
+- _**Embarked**_ (*Factor*): port a on el passatger va embarcar: "C" = Cherbourg, "S" = Southampton i "Q" = Queenstown
+
+### Importància i objectius
+El Titanic es va enfonsar, durant el seu viatge inaugural el 15 d'abril de 1912, xocant amb un iceberg. Van morir 1502 passatgers i tripulants d'un total de 2224. 
+
+La raó principal d'aquest número tan important de víctimes de la tragèdia va ser la quantitat escassa de bots salvavides envers el nombre de vides a bord. Es diu que, per preferència, els nens, les dones i la classe alta tenien més possibilitats de sobreviure.
+
+L'objectiu principal d'aquest estudi és el de conèixer si aquesta afirmació és certa. Es pretén doncs, respondre a la pregunta de quin grup de persones va tenir mes possibilitats de sobreviure i quin tipus de característiques té.
+
+## Pre-processament
+### Integració i selecció de les dades
+**TO-DO: Integració i selecció de les dades d’interès a analitzar**
+
+La integració de les dades consisteix a combinar les dades de diferents fonts de dades. En aquest cas, com que ens basem en un *dataset* concret, no serà necessari integrar més fonts. 
+
+En canvi, 
+```{r}
+titanic <- titanic.original
+
+```
+
+### Neteja de les dades
+TO-DO
+
+#### Zeros y elements buits
+TO-DO: Les dades contenen zeros o elements buits? Com gestionaries aquests casos?
+
+#### Valors extrems
+TO-DO: Identificació i tractament
+
+### Exportació de les dades preprocessades
+TO-DO
+
+## Anàlisi de les dades
+TO-DO
+
+### Selecció dels grups de dades
+TO-DO: Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar).
+
+### Comprovació de la normalitat i homogeneïtat de la variància
+TO-DO
+
+### Aplicació de proves estadístiques 
+TO-DO: En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents.
+
+## Representació dels resultats
+TO-DO: Taules i gràfiques
+
+## Resolució del problema
+TO-DO: A partir dels resultats obtinguts, quines són les conclusions? Els resultats permeten respondre al problema?
