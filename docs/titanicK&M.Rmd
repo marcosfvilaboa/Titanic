@@ -1,4 +1,9 @@
 ---
+output:
+  pdf_document: default
+  html_document: default
+---
+--
 title: "Tipologia i cicle de dades. Pràctica 2"
 author: "Marcos F. Vilaboa & Joaquim Salomon"
 date: "22 de mayo de 2019"
@@ -57,7 +62,7 @@ El conjunt de dades utilitzat en el present anàlisi s'ha extret de la web [kagg
 ### Càrrega inicial de dades
 Per tal de descriure el conjunt, realitzarem una càrrega inicial de les dades amb R:
 ```{r}
-titanic.original <- read.csv("~/R/TCVD/Titanic/data/titanic_train.csv", header=TRUE)
+titanic.original <- read.csv("../data/titanic_train.csv", header=TRUE)
 str(titanic.original)
 ```
 
@@ -106,20 +111,86 @@ La integració de les dades consisteix a combinar les dades de diferents fonts d
 En canvi, 
 ```{r}
 titanic <- titanic.original
-
 ```
-
 ### Neteja de les dades
 TO-DO
 
 #### Zeros y elements buits
-TO-DO: Les dades contenen zeros o elements buits? Com gestionaries aquests casos?
+[TO-DO: Les dades contenen zeros o elements buits? Com gestionaries aquests casos?]
+
+En primer lloc, cal comprovar que les dades no continguin elements buits o zeros. Per a fer-ho, primerament ens fixem en la primera mostra de les dades que s'ha pogut veure unes línies més amunt on es pot veure dades que equivalen a valors buits "" i també valors nul·ls representats com NA. 
+Aleshores, anem a veure quins camps contenen aquestes dades nul·les o buides.
+Per a veure les dades buides executem la següent funció per veure el nombre d'atributs que contenen algun camp buit.
+```{r}
+colSums(titanic=="")
+```
+
+I en aquest pas es farà el mateix per a dades nul·les.
+
+```{r}
+colSums(is.na(titanic))
+```
+
+Així doncs, els atributs _Cabin_, _Embarked_ i _Age_ contenen dades a tractar.
+
+Per a l'atribut _Cabin_ veiem que una gran part dels valors de l'atribuit són buits o nul·ls, aleshores s'haurà de prescindir d'aquest atribuit ja que no pot aportar cap informació rellevant.
+
+Eliminem l'atribut.
+
+```{r}
+titanic["Cabin"] <- NULL
+```
+
+Per omplir els valors buits de l'atribut _Embarked_ ho farem amb el valor més freqüent:
+
+```{r}
+sort(table(titanic$Embarked),decreasing=TRUE)
+```
+On es pot veure que el valor més repetit és "S". 
+
+Aleshores:
+```{r}
+titanic$Embarked[titanic$Embarked==""]="S"
+```
+
+Per últim, els valors nul·ls de l'atribut _Age_ els substituim per la mitjana dels valors no nul·ls:
+
+```{r}
+titanic$Age[is.na(titanic$Age)] <- mean(titanic$Age,na.rm=T)
+```
+
 
 #### Valors extrems
-TO-DO: Identificació i tractament
+[TO-DO: IdentificaciÃ³ i tractament]
+
+A continuació creem una funció per trobar els valors extrems dins de les variables numèriques. En aquest cas concret en tenim quatre: _Age_, _SibSp_, _Parch_ i _Fare_
+```{r}
+removeOutlierValues <- function(dataset,arrayToCheck) {
+   mean <- mean(arrayToCheck)
+   standardDev <- sd(mean(arrayToCheck))
+   min_value <- mean(arrayToCheck)-3*sd(arrayToCheck)
+   max_value <- mean(arrayToCheck)+3*sd(arrayToCheck)
+   newDatasetWoOutliers <- dataset[(arrayToCheck>=min_value & arrayToCheck<=max_value),]
+   outliers_count <- nrow(dataset)-nrow(newDatasetWoOutliers)
+   cat("From", deparse(substitute(arrayToCheck)), outliers_count, "skipped tuples", "\n\n") 
+   return (newDatasetWoOutliers)
+}
+```
+
+El que es fa en aquesta funció és eliminar les tuples del dataset que contenen outliers en l'atribut d'entrada. Aleshores, aplicant la funció per a tots els atributs desitjats ens permetrà eliminar totes les tuples que contenen outliers.
+```{r}
+#titanic <- removeOutlierValues(titanic, titanic$Age)
+#titanic <- removeOutlierValues(titanic, titanic$SibSp)
+#titanic <- removeOutlierValues(titanic, titanic$Parch)
+#titanic <- removeOutlierValues(titanic, titanic$Fare)
+```
 
 ### Exportació de les dades preprocessades
-TO-DO
+Un cop transformat els dataset s'exporta en un ".csv"
+
+```{r}
+write.csv(titanic, "../data/titanic_train_transformed.csv")
+```
 
 ## Anàlisi de les dades
 TO-DO
