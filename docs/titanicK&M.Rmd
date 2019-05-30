@@ -104,19 +104,21 @@ L'objectiu principal d'aquest estudi és el de conèixer si aquesta afirmació �
 
 ## Pre-processament
 ### Integració i selecció de les dades
-**TO-DO: Integració i selecció de les dades d’interès a analitzar**
 
 La integració de les dades consisteix a combinar les dades de diferents fonts de dades. En aquest cas, com que ens basem en un *dataset* concret, no serà necessari integrar més fonts. 
 
 En canvi, 
 ```{r}
-titanic <- titanic.original
+titanic <- titanic.original ## descartar vars que no volem (passID, Embarked, Ticket)
 ```
+
+
+### -->>> Extreure TITOL de Name <<<-----
+
+
 ### Neteja de les dades
-TO-DO
 
 #### Zeros y elements buits
-[TO-DO: Les dades contenen zeros o elements buits? Com gestionaries aquests casos?]
 
 En primer lloc, cal comprovar que les dades no continguin elements buits o zeros. Per a fer-ho, primerament ens fixem en la primera mostra de les dades que s'ha pogut veure unes línies més amunt on es pot veure dades que equivalen a valors buits "" i també valors nul·ls representats com NA. 
 Aleshores, anem a veure quins camps contenen aquestes dades nul·les o buides.
@@ -131,7 +133,7 @@ I en aquest pas es farà el mateix per a dades nul·les.
 colSums(is.na(titanic))
 ```
 
-Així doncs, els atributs _Cabin_, _Embarked_ i _Age_ contenen dades a tractar.
+Així doncs, els atributs _Cabin_ i _Age_ contenen dades a tractar.
 
 Per a l'atribut _Cabin_ veiem que una gran part dels valors de l'atribuit són buits o nul·ls, aleshores s'haurà de prescindir d'aquest atribuit ja que no pot aportar cap informació rellevant.
 
@@ -141,17 +143,6 @@ Eliminem l'atribut.
 titanic["Cabin"] <- NULL
 ```
 
-Per omplir els valors buits de l'atribut _Embarked_ ho farem amb el valor més freqüent:
-
-```{r}
-sort(table(titanic$Embarked),decreasing=TRUE)
-```
-On es pot veure que el valor més repetit és "S". 
-
-Aleshores:
-```{r}
-titanic$Embarked[titanic$Embarked==""]="S"
-```
 
 Per últim, els valors nul·ls de l'atribut _Age_ els substituim per la mitjana dels valors no nul·ls:
 
@@ -161,7 +152,8 @@ titanic$Age[is.na(titanic$Age)] <- mean(titanic$Age,na.rm=T)
 
 
 #### Valors extrems
-[TO-DO: IdentificaciÃ³ i tractament]
+
+#[Juntar SibSp i Parch i comprovar outliers un altre cop]
 
 A continuació creem una funció per trobar els valors extrems dins de les variables numèriques. En aquest cas concret en tenim quatre: _Age_, _SibSp_, _Parch_ i _Fare_
 ```{r}
@@ -179,7 +171,7 @@ removeOutlierValues <- function(dataset,arrayToCheck) {
 
 El que es fa en aquesta funció és eliminar les tuples del dataset que contenen outliers en l'atribut d'entrada. Aleshores, aplicant la funció per a tots els atributs desitjats ens permetrà eliminar totes les tuples que contenen outliers.
 ```{r}
-#titanic <- removeOutlierValues(titanic, titanic$Age)
+titanic <- removeOutlierValues(titanic, titanic$Age)
 #titanic <- removeOutlierValues(titanic, titanic$SibSp)
 #titanic <- removeOutlierValues(titanic, titanic$Parch)
 #titanic <- removeOutlierValues(titanic, titanic$Fare)
@@ -193,10 +185,9 @@ write.csv(titanic, "../data/titanic_train_transformed.csv")
 ```
 
 ## Anàlisi de les dades
-TO-DO
 
 ### Selecció dels grups de dades
-TO-DO: Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar).
+**TO-DO: Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar).**
 
 ### Comprovació de la normalitat i homogeneïtat de la variància
 TO-DO
