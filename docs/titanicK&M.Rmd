@@ -113,7 +113,7 @@ titanic <- titanic.original ## descartar vars que no volem (passID, Embarked, Ti
 ```
 
 
-### -->>> Extreure TITOL de Name <<<-----
+### -->>> Extreure TITOL de Name <<<-----  FET AL .R
 
 
 ### Neteja de les dades

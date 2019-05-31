@@ -2,15 +2,50 @@
 ####  Titanic  
 ##################
 
-# ---Càrrega de dades---
+# ---Data load---
 titanic.original <- read.csv("data/titanic_train.csv", header=TRUE)
-# Composició
+# Composition of data
 head(titanic.original)
-tsummary(titanic.original)
+summary(titanic.original)
 str(titanic.original)
-titanic <- titanic.original
 
-# ---Nuls i buits---
+# ---Pre-process---
+# subsetting skipping 'passangerId', 'Embarked' and 'Ticket' columns from original
+
+## MANTINC passangerId per poder
+titanic <- titanic.original[, c(1:8, 10, 11)]
+# extract passenger names saving only the titles
+titanic$Name <- as.factor(gsub('(.*, )|(\\..*)', '', titanic$Name))
+# change 'Name' column name to 'Title'
+names(titanic)[names(titanic) == "Name"] <- "Title"
+# combines some passenger titles
+# (from tnikaggle user in kaggle --> https://www.kaggle.com/tysonni/extracting-passenger-titiles-in-r)
+# and Narcel Reedus September 14, 2017 --> https://rpubs.com/Nreedus/Titanic
+library(dplyr)
+levels(titanic$Title)
+titles_lookup <- data.frame(Title = c("Capt", "Col", "Don", "Dr", "Jonkheer", "Major", "Rev", "Sir",
+                                      "Mr", "Master", 
+                                      "Lady", "Mlle", "Mme", "Ms", "the Countess",
+                                      "Mrs", "Miss"), 
+                            New.Title = c(rep("Noble male", 8),
+                                          "Mr", "Master",
+                                          rep("Noble female", 5),
+                                          "Mrs", "Miss"),
+                            stringsAsFactors = FALSE)
+titanic <- titanic %>%
+  left_join(titles_lookup, by = "Title")
+titanic <- titanic %>%
+  mutate(Title = New.Title) %>%
+  select(-New.Title)
+# see possibles sex-title missmatch
+titanic %>%
+  filter((Sex == "female" & (Title == "Noble male" | Title == "Mr" | Title == "Master") |
+           (Sex == "male" & (Title == "Noble female" | Title == "Mrs" | Title == "Miss"))))
+# change that row
+titanic <- titanic %>%
+  mutate(Title=replace(Title, (Sex == "female" & (Title == "Noble male")), "Noble female"))
+
+# ---Nulls & empties---
 colSums(titanic=="")
 colSums(is.na(titanic))
 titanic["Cabin"] <- NULL
@@ -43,7 +78,9 @@ removeOutlierValues <- function(dataset,arrayToCheck) {
   return (newDatasetWoOutliers)
 }
 titanic <- removeOutlierValues(titanic, titanic$Age)
-titanic <- removeOutlierValues(titanic, titanic$SibSp)
-titanic <- removeOutlierValues(titanic, titanic$Parch)
-titanic <- removeOutlierValues(titanic, titanic$Fare)
+
+# ---Outliers---
+#To-Do
+
 write.csv(titanic, "../data/titanic_train_transformed.csv")
+
