@@ -109,11 +109,8 @@ La integració de les dades consisteix a combinar les dades de diferents fonts d
 
 En canvi, 
 ```{r}
-titanic <- titanic.original ## descartar vars que no volem (passID, Embarked, Ticket)
+titanic <- titanic.original[,-which(names(titanic.original) %in% c("Embarked","Ticket","PassengerId"))]
 ```
-
-
-### -->>> Extreure TITOL de Name <<<-----  FET AL .R
 
 
 ### Neteja de les dades
@@ -153,32 +150,107 @@ titanic$Age[is.na(titanic$Age)] <- mean(titanic$Age,na.rm=T)
 
 #### Valors extrems
 
-#[Juntar SibSp i Parch i comprovar outliers un altre cop]
-
-A continuació creem una funció per trobar els valors extrems dins de les variables numèriques. En aquest cas concret en tenim quatre: _Age_, _SibSp_, _Parch_ i _Fare_
+A continuació creem una funció per a trobar els valors extrems dins dels atributs numèrics i una altra per esobrrar-los en cas que sigui necessari. En aquest cas concret en tenim quatre: _Age_, _SibSp_, _Parch_ i _Fare_
 ```{r}
+seeOutlierValues <- function(dataset,arrayToCheck) {
+  mean <- mean(arrayToCheck)
+  standardDev <- sd(mean(arrayToCheck))
+  min_value <- mean(arrayToCheck)-3*sd(arrayToCheck)
+  max_value <- mean(arrayToCheck)+3*sd(arrayToCheck)
+  newDatasetWOutliers <- dataset[(arrayToCheck<=min_value | arrayToCheck>=max_value),]
+  outliers_count <- nrow(dataset)-nrow(newDatasetWOutliers)
+  return (newDatasetWOutliers)
+}
+
 removeOutlierValues <- function(dataset,arrayToCheck) {
-   mean <- mean(arrayToCheck)
-   standardDev <- sd(mean(arrayToCheck))
-   min_value <- mean(arrayToCheck)-3*sd(arrayToCheck)
-   max_value <- mean(arrayToCheck)+3*sd(arrayToCheck)
-   newDatasetWoOutliers <- dataset[(arrayToCheck>=min_value & arrayToCheck<=max_value),]
-   outliers_count <- nrow(dataset)-nrow(newDatasetWoOutliers)
-   cat("From", deparse(substitute(arrayToCheck)), outliers_count, "skipped tuples", "\n\n") 
-   return (newDatasetWoOutliers)
+  mean <- mean(arrayToCheck)
+  standardDev <- sd(mean(arrayToCheck))
+  min_value <- mean(arrayToCheck)-3*sd(arrayToCheck)
+  max_value <- mean(arrayToCheck)+3*sd(arrayToCheck)
+  newDatasetWoOutliers <- dataset[(arrayToCheck>=min_value & arrayToCheck<=max_value),]
+  outliers_count <- nrow(dataset)-nrow(newDatasetWoOutliers)
+  cat("From", deparse(substitute(arrayToCheck)), outliers_count, "skipped tuples", "\n\n") 
+  return (newDatasetWoOutliers)
 }
 ```
 
-El que es fa en aquesta funció és eliminar les tuples del dataset que contenen outliers en l'atribut d'entrada. Aleshores, aplicant la funció per a tots els atributs desitjats ens permetrà eliminar totes les tuples que contenen outliers.
+Primerament, es miren els outliers per a cada variable i després de fer una valoració es decideix borrar-los o mantenir-los.
+
+En el case de _Fare_ com es pot veure a continuació els outliers, considerant outliers els valors que estan a més de tres desviacions estàndard de la mitja, no són discordants. Per tant, no es veu la necessitat d'esborrar-los.
+
 ```{r}
-titanic <- removeOutlierValues(titanic, titanic$Age)
-#titanic <- removeOutlierValues(titanic, titanic$SibSp)
-#titanic <- removeOutlierValues(titanic, titanic$Parch)
-#titanic <- removeOutlierValues(titanic, titanic$Fare)
+## 'Fare'
+seeOutlierValues(titanic, titanic$Fare)
 ```
 
+Per les variables _SibSP_ i _Parch_ es decideix unir les variables, ja que tots fan referència a familia abord del vaixell. Aleshores, amb la variable conjunta es miren els outliers i es considera que tampoc són discordants ja que les famílies de mida més petita són les que tenen algun component que sobreviu.
+```{r}
+## 'SibSp' & 'Parch' --> Join in 'Family_size'
+titanic$Family_size <- titanic$SibSp + titanic$Parch
+seeOutlierValues(titanic, titanic$Family_size)
+
+
+### Discard SibSp & Parch
+titanic["SibSp"] <- NULL
+titanic["Parch"] <- NULL
+```
+
+I per últim a la variable _Age_ si que es decideixen suprimir els outliers ja que precissament la persona més gran és la que sobreviu i això pot comportar a errors d'anàlisis.
+```{r}
+## 'Age'
+seeOutlierValues(titanic, titanic$Age)
+titanic <- removeOutlierValues(titanic, titanic$Age)
+```
+
+#### Transformació de les variables
+En aquest cas, l'a variable l'atribut _Name_ pot tenir algun valor, ja que en aquesta s'hi pot trobar el títol de la persona. Així, es decideix extreure aquest títol del nom i conservar només el nou atribut _Title_ derivat de _Name_.
+```{r}
+### S'extreu el títol
+titanic$Title <- as.factor(gsub('(.*, )|(\\..*)', '', titanic$Name))
+
+### S'elimina l'att Name
+titanic["Name"] <- NULL #La variable Name ja no té cap valor
+
+### S'unifiquen valors per reduir la grandària del grup
+library(dplyr)
+levels(titanic$Title)
+titles_lookup <- data.frame(Title = c("Capt", "Col", "Don", "Dr", "Jonkheer", "Major", "Rev", "Sir",
+                                      "Mr", "Master", 
+                                      "Lady", "Mlle", "Mme", "Ms", "the Countess",
+                                      "Mrs", "Miss"), 
+                            New.Title = c(rep("Noble male", 8),
+                                          "Mr", "Master",
+                                          rep("Noble female", 5),
+                                          "Mrs", "Miss"),
+                            stringsAsFactors = FALSE)
+
+### S'inclouen en el dataset
+titanic <- titanic %>%
+  left_join(titles_lookup, by = "Title")
+
+titanic <- titanic %>%
+  mutate(Title = New.Title) %>%
+  select(-New.Title)
+
+### Es visualitzen possibles errors de sexe en el títol
+titanic %>%
+  filter((Sex == "female" & (Title == "Noble male" | Title == "Mr" | Title == "Master") |
+           (Sex == "male" & (Title == "Noble female" | Title == "Mrs" | Title == "Miss"))))
+
+### Es corregeixen els errors
+titanic <- titanic %>%
+  mutate(Title=replace(Title, (Sex == "female" & (Title == "Noble male")), "Noble female"))
+```
+
+Per finalitzar, caldrà transformar les variables categòriques en factors per poder tractar-les més fàcilment en l'anàlisis
+```{r}
+titanic$Pclass <- as.factor(titanic$Pclass)
+titanic$Title <- as.factor(titanic$Title)
+```
+
+
 ### Exportació de les dades preprocessades
-Un cop transformat els dataset s'exporta en un ".csv"
+Un cop transformat el dataset s'exporta en un ".csv"
 
 ```{r}
 write.csv(titanic, "../data/titanic_train_transformed.csv")
@@ -188,6 +260,50 @@ write.csv(titanic, "../data/titanic_train_transformed.csv")
 
 ### Selecció dels grups de dades
 **TO-DO: Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar).**
+En aquesta secció es preparen els grups dividint-los segons els valors dels diferents atributs i amb la funció i _seeGroupStatics_ (creada a continuació) es podrà fer una primer anàlisis.
+
+```{r}
+seeGroupStatics <- function(resultArray, categoricalArray){
+  aggregate(resultArray, list(categoricalArray), FUN = function(x) c(mean = mean(x), count = length(x) ))
+}
+
+## Groups
+
+### by 'Pclass'
+levels(titanic$Pclass)
+seeGroupStatics(titanic$Survived, titanic$Pclass)
+t_pclass_1 <- titanic %>% filter(Pclass == "1")
+t_pclass_2 <- titanic %>% filter(Pclass == "2")
+t_pclass_3 <- titanic %>% filter(Pclass == "3")
+
+### by 'Title'
+levels(titanic$Title)
+seeGroupStatics(titanic$Survived, titanic$Title)
+t_title_Master <- titanic %>% filter(Title == "Master")
+t_title_Miss <- titanic %>% filter(Title == "Miss")
+t_title_Mr <- titanic %>% filter(Title == "Mr")
+t_title_Mrs <- titanic %>% filter(Title == "Mrs")
+t_title_Noble_female <- titanic %>% filter(Title == "Noble female")
+t_title_Noble_male <- titanic %>% filter(Title == "Noble male")
+
+### by 'Sex'
+levels(titanic$Sex)
+seeGroupStatics(titanic$Survived, titanic$Sex)
+t_sex_male <- titanic %>% filter(Sex == "male")
+t_sex_female <- titanic %>% filter(Sex == "female")
+
+##by 'Age'
+max(titanic$Age)
+titanic$AgeCategorical<-cut(titanic$Age, seq(0,70,5))
+aggregate(titanic[, "Survived"], list(titanic$AgeCategorical), FUN = function(x) c(mean = mean(x), count = length(x) ))
+titanic$AgeCategorical <- cut(titanic$Age, breaks=c(0, 15, 35, 50, 70), labels=c("Youth","Young Adult","Adult","Senior"))
+aggregate(titanic[, "Survived"], list(titanic$AgeCategorical), FUN = function(x) c(mean = mean(x), count = length(x) ))
+t_age_youth <- titanic %>% filter(AgeCategorical == "Youth")
+t_age_youngAdult <- titanic %>% filter(AgeCategorical == "Young Adult")
+t_age_adult <- titanic %>% filter(AgeCategorical == "Adult")
+t_age_senior <- titanic %>% filter(AgeCategorical == "Senior")
+```
+
 
 ### Comprovació de la normalitat i homogeneïtat de la variància
 TO-DO
