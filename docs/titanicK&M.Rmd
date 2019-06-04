@@ -179,39 +179,37 @@ Primerament, es miren els outliers per a cada variable i després de fer una val
 En el case de _Fare_ com es pot veure a continuació els outliers, considerant outliers els valors que estan a més de tres desviacions estàndard de la mitja, no són discordants. Per tant, no es veu la necessitat d'esborrar-los.
 
 ```{r}
-## 'Fare'
 seeOutlierValues(titanic, titanic$Fare)
 ```
 
 Per les variables _SibSP_ i _Parch_ es decideix unir les variables, ja que tots fan referència a familia abord del vaixell. Aleshores, amb la variable conjunta es miren els outliers i es considera que tampoc són discordants ja que les famílies de mida més petita són les que tenen algun component que sobreviu.
 ```{r}
-## 'SibSp' & 'Parch' --> Join in 'Family_size'
 titanic$Family_size <- titanic$SibSp + titanic$Parch
 seeOutlierValues(titanic, titanic$Family_size)
-
-
-### Discard SibSp & Parch
+```
+Descartem els atributs origen:
+```{r}
 titanic["SibSp"] <- NULL
 titanic["Parch"] <- NULL
 ```
 
-I per últim a la variable _Age_ si que es decideixen suprimir els outliers ja que precissament la persona més gran és la que sobreviu i això pot comportar a errors d'anàlisis.
+I per últim, a la variable _Age_, si que es decideixen suprimir els outliers ja que precissament la persona més gran és la que sobreviu i això pot comportar a errors d'anàlisis.
 ```{r}
-## 'Age'
 seeOutlierValues(titanic, titanic$Age)
 titanic <- removeOutlierValues(titanic, titanic$Age)
 ```
 
 #### Transformació de les variables
-En aquest cas, l'a variable l'atribut _Name_ pot tenir algun valor, ja que en aquesta s'hi pot trobar el títol de la persona. Així, es decideix extreure aquest títol del nom i conservar només el nou atribut _Title_ derivat de _Name_.
+En aquest cas, l'atribut _Name_ pot tenir algun valor, ja que en aquesta s'hi pot trobar el títol de la persona. Així, es decideix extreure aquest títol del nom 
 ```{r}
-### S'extreu el títol
 titanic$Title <- as.factor(gsub('(.*, )|(\\..*)', '', titanic$Name))
-
-### S'elimina l'att Name
+```
+i conservar només el nou atribut _Title_ derivat de _Name_.
+```{r}
 titanic["Name"] <- NULL #La variable Name ja no té cap valor
-
-### S'unifiquen valors per reduir la grandària del grup
+```
+S'unifiquen valors per reduir la grandària del grup
+```{r}
 library(dplyr)
 levels(titanic$Title)
 titles_lookup <- data.frame(Title = c("Capt", "Col", "Don", "Dr", "Jonkheer", "Major", "Rev", "Sir",
@@ -223,21 +221,24 @@ titles_lookup <- data.frame(Title = c("Capt", "Col", "Don", "Dr", "Jonkheer", "M
                                           rep("Noble female", 5),
                                           "Mrs", "Miss"),
                             stringsAsFactors = FALSE)
-
-### S'inclouen en el dataset
+```
+S'inclouen en el dataset
+```{r}
 titanic <- titanic %>%
   left_join(titles_lookup, by = "Title")
 
 titanic <- titanic %>%
   mutate(Title = New.Title) %>%
   select(-New.Title)
-
-### Es visualitzen possibles errors de sexe en el títol
+```
+i es visualitzen possibles errors de sexe en el títol
+```{r}
 titanic %>%
   filter((Sex == "female" & (Title == "Noble male" | Title == "Mr" | Title == "Master") |
            (Sex == "male" & (Title == "Noble female" | Title == "Mrs" | Title == "Miss"))))
-
-### Es corregeixen els errors
+```
+Com es pot veure, ha detectat una dona com a _Noble male_ i la corregim:
+```{r}
 titanic <- titanic %>%
   mutate(Title=replace(Title, (Sex == "female" & (Title == "Noble male")), "Noble female"))
 ```
@@ -260,23 +261,24 @@ write.csv(titanic, "../data/titanic_train_transformed.csv")
 
 ### Selecció dels grups de dades
 **TO-DO: Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar).**
-En aquesta secció es preparen els grups dividint-los segons els valors dels diferents atributs i amb la funció i _seeGroupStatics_ (creada a continuació) es podrà fer una primer anàlisis.
+En aquesta secció es preparen els grups dividint-los segons els valors dels diferents atributs i amb la funció _seeGroupStatics_ (creada a continuació) es podrà fer una primer anàlisis.
 
 ```{r}
 seeGroupStatics <- function(resultArray, categoricalArray){
   aggregate(resultArray, list(categoricalArray), FUN = function(x) c(mean = mean(x), count = length(x) ))
 }
+```
 
-## Groups
-
-### by 'Pclass'
+Una de les agrupacions és a partir de la variable _Pclass_ a on podem categoritzar els passatgers segons si van embarcar amb 1a, 2a o 3a classe.
+```{r}
 levels(titanic$Pclass)
 seeGroupStatics(titanic$Survived, titanic$Pclass)
 t_pclass_1 <- titanic %>% filter(Pclass == "1")
 t_pclass_2 <- titanic %>% filter(Pclass == "2")
 t_pclass_3 <- titanic %>% filter(Pclass == "3")
-
-### by 'Title'
+```
+La següent es _Title_ 
+```{r}
 levels(titanic$Title)
 seeGroupStatics(titanic$Survived, titanic$Title)
 t_title_Master <- titanic %>% filter(Title == "Master")
@@ -285,14 +287,16 @@ t_title_Mr <- titanic %>% filter(Title == "Mr")
 t_title_Mrs <- titanic %>% filter(Title == "Mrs")
 t_title_Noble_female <- titanic %>% filter(Title == "Noble female")
 t_title_Noble_male <- titanic %>% filter(Title == "Noble male")
-
-### by 'Sex'
+```
+Per _Sex_
+```{r}
 levels(titanic$Sex)
 seeGroupStatics(titanic$Survived, titanic$Sex)
 t_sex_male <- titanic %>% filter(Sex == "male")
 t_sex_female <- titanic %>% filter(Sex == "female")
-
-##by 'Age'
+```
+Per _Age_, a on els agrupem en les categoríes _Youth_, _Young Adult_, _Adult_ i _Senior_, segons si tenen de 0 a 14 anys, de 15 a 34, de 34 a 49 i de 50 a 70 respectivament.
+```{r}
 max(titanic$Age)
 titanic$AgeCategorical<-cut(titanic$Age, seq(0,70,5))
 aggregate(titanic[, "Survived"], list(titanic$AgeCategorical), FUN = function(x) c(mean = mean(x), count = length(x) ))

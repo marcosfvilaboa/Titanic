@@ -3,7 +3,7 @@
 ##################
 
 # ---Data load---
-titanic.original <- read.csv("../data/titanic_train.csv", header=TRUE)
+titanic.original <- read.csv("data/titanic_train.csv", header=TRUE)
 ##data composition
 head(titanic.original)
 summary(titanic.original)
@@ -13,13 +13,13 @@ str(titanic.original)
 ## subsetting skipping 'passangerId', 'Embarked' and 'Ticket' columns from original
 
 #titanic <- titanic.original[, c(2:8, 10, 11)]
-titanic <- titanic.original[,-which(names(titanic.original) %in% c("Embarked","Ticket","PassengerId"))] #AixÌ queda mÈs clar quines columnes es descarten
+titanic <- titanic.original[,-which(names(titanic.original) %in% c("Embarked","Ticket","PassengerId"))] #Aix? queda m?s clar quines columnes es descarten OK
 
-##>>>>>> Proposo crear l'att Title i no sobrescriure el Name. DesprÈs borrem el Name comentant que no tÈ sentit guardar-lo. Ho dic perquË queda mÈs clar quË estem fent
+##>>>>>> OK -> Proposo crear l'att Title i no sobrescriure el Name. Despr?s borrem el Name comentant que no t? sentit guardar-lo. Ho dic perqu? queda m?s clar qu? estem fent
 
 ## extract passenger names saving only the titles
 titanic$Title <- as.factor(gsub('(.*, )|(\\..*)', '', titanic$Name))
-titanic["Name"] <- NULL #La variable Name ja no tÈ cap valor
+titanic["Name"] <- NULL #La variable Name ja no t? cap valor
 
 ### change 'Name' column name to 'Title'
 #names(titanic)[names(titanic) == "Name"] <- "Title"
@@ -29,6 +29,8 @@ titanic["Name"] <- NULL #La variable Name ja no tÈ cap valor
 ## combines some passenger titles
 ## (from tnikaggle user in kaggle --> https://www.kaggle.com/tysonni/extracting-passenger-titiles-in-r)
 ## and Narcel Reedus September 14, 2017 --> https://rpubs.com/Nreedus/Titanic
+
+install.packages("dplyr") #<-- If doesn't exist delete the comment
 library(dplyr)
 levels(titanic$Title)
 titles_lookup <- data.frame(Title = c("Capt", "Col", "Don", "Dr", "Jonkheer", "Major", "Rev", "Sir",
@@ -52,8 +54,9 @@ titanic %>%
 ### change that row
 titanic <- titanic %>%
   mutate(Title=replace(Title, (Sex == "female" & (Title == "Noble male")), "Noble female"))
-##>>>>>> Em sembla bastant inteligent fer aixÚ pero ojo perquË d'alguna manera aquÌ estem juntant sex + class
-
+##>>>>>> Em sembla bastant inteligent fer aix? pero ojo perqu? d'alguna manera aqu? estem juntant sex + class
+##>>>> La idea d'aix√≤ √©s per posar el t√≠tol corresponent sogons el sexe per a Doctor-Noble (female-male)
+##>>>> M√©s aviat estic associant el t√≠tol amb el sexe.
 
 # ---Nulls & empties---
 colSums(titanic=="")
@@ -88,12 +91,13 @@ removeOutlierValues <- function(dataset,arrayToCheck) {
 seeOutlierValues(titanic, titanic$Fare)
 
 ## 'SibSp' & 'Parch' --> Join in 'Family_size'
-##>>>>>>>> Si els ajuntem no tÈ molt sentit mirar els outliers per separat
+##>>>>>>>> Si els ajuntem no t? molt sentit mirar els outliers per separat
+##>>>> vista la justificaci√≥ que realitzes al Rmd i em sembla perfecte.
 #seeOutlierValues(titanic, titanic$SibSp) 
 #seeOutlierValues(titanic, titanic$Parch)
 titanic$Family_size <- titanic$SibSp + titanic$Parch
 seeOutlierValues(titanic, titanic$Family_size)
-#No treure els Outliers, el que tenen famÌlies mÈs petites sÛn els que sobreviuen
+#No treure els Outliers, el que tenen fam?lies m?s petites s?n els que sobreviuen
 
 ### Discard SibSp & Parch
 titanic["SibSp"] <- NULL
@@ -106,7 +110,12 @@ titanic <- removeOutlierValues(titanic, titanic$Age)
 # ---Export dataset---
 str(titanic)
 ## change types: Pclass, Survived & Title as factor
-#titanic$Survived <- as.factor(titanic$Survived) #Si l'utilitzem com a int tenim la possibilitat d'utilitzar mean
+#titanic$Survived <- as.factor(titanic$Survived) 
+#>>>> Si l'utilitzem com a int tenim la possibilitat d'utilitzar mean
+#>>>> Tens ra√≥, pot ser interessant. Per√≤ Survived √©s una variable factor.
+#>>>> De fet, es tracta de la variable de classe.
+#>>>> Potser es m√©s "correcte" desar-la com a factor i si cal algun c√†lcul amb
+#>>>> 'mean' fer-lo amb as.integer
 titanic$Pclass <- as.factor(titanic$Pclass)
 titanic$Title <- as.factor(titanic$Title)
 str(titanic)
