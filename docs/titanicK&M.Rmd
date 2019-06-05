@@ -1,9 +1,4 @@
 ---
-output:
-  pdf_document: default
-  html_document: default
----
---
 title: "Tipologia i cicle de dades. Pràctica 2"
 author: "Marcos F. Vilaboa & Joaquim Salomon"
 date: "22 de mayo de 2019"
@@ -245,6 +240,7 @@ titanic <- titanic %>%
 
 Per finalitzar, caldrà transformar les variables categòriques en factors per poder tractar-les més fàcilment en l'anàlisis
 ```{r}
+titanic$Survived <- as.factor(titanic$Survived)
 titanic$Pclass <- as.factor(titanic$Pclass)
 titanic$Title <- as.factor(titanic$Title)
 ```
@@ -260,15 +256,16 @@ write.csv(titanic, "../data/titanic_train_transformed.csv")
 ## Anàlisi de les dades
 
 ### Selecció dels grups de dades
-**TO-DO: Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar).**
+Primer de tot, i com que _Survived_ és la variable de classe i, com a tal de tipus factor, però per als següents càlculs la farem servir com a referència numèrica, la passarem a tipus _integer_.
+```{r}
+titanic$Survived <- as.integer(titanic$Survived)
+```
 En aquesta secció es preparen els grups dividint-los segons els valors dels diferents atributs i amb la funció _seeGroupStatics_ (creada a continuació) es podrà fer una primer anàlisis.
-
 ```{r}
 seeGroupStatics <- function(resultArray, categoricalArray){
   aggregate(resultArray, list(categoricalArray), FUN = function(x) c(mean = mean(x), count = length(x) ))
 }
 ```
-
 Una de les agrupacions és a partir de la variable _Pclass_ a on podem categoritzar els passatgers segons si van embarcar amb 1a, 2a o 3a classe.
 ```{r}
 levels(titanic$Pclass)
@@ -288,14 +285,14 @@ t_title_Mrs <- titanic %>% filter(Title == "Mrs")
 t_title_Noble_female <- titanic %>% filter(Title == "Noble female")
 t_title_Noble_male <- titanic %>% filter(Title == "Noble male")
 ```
-Per _Sex_
+Per _Sex_:
 ```{r}
 levels(titanic$Sex)
 seeGroupStatics(titanic$Survived, titanic$Sex)
 t_sex_male <- titanic %>% filter(Sex == "male")
 t_sex_female <- titanic %>% filter(Sex == "female")
 ```
-Per _Age_, a on els agrupem en les categoríes _Youth_, _Young Adult_, _Adult_ i _Senior_, segons si tenen de 0 a 14 anys, de 15 a 34, de 34 a 49 i de 50 a 70 respectivament.
+A _Age_ els agrupem en les categoríes _Youth_, _Young Adult_, _Adult_ i _Senior_, segons si tenen de 0 a 15 anys, de 16 a 35, de 36 a 50 i de 51 a 70 respectivament.
 ```{r}
 max(titanic$Age)
 titanic$AgeCategorical<-cut(titanic$Age, seq(0,70,5))
@@ -310,10 +307,72 @@ t_age_senior <- titanic %>% filter(AgeCategorical == "Senior")
 
 
 ### Comprovació de la normalitat i homogeneïtat de la variància
-TO-DO
+#### Normalitat
+Comprovar si les dades segueixen una distribució normal es pot realitzar de diverses maneres. Es pot comprovar gràficament si segueix una corba en forma de campana. Es a dir la probabilitat d'obtenir una observació serà més alta al centre de la corba mentres que disminueix a mesura que ens allunyem del mig. 
+Farem servir la llibreria _ggplot2_ per visualitzar l'histograma de les variables numèriques.
+Per exemple, per al cas de la variable _Age_:
+```{r}
+library(ggplot2)
+### See normality of 'Age' by plot
+ggplot(titanic, aes(x=Age)) + 
+  geom_histogram(aes(y=..density..), binwidth = 6, colour="black", fill="lightblue")
+```
+A simple vista, sembla seguir una distribució normal.
+
+Una altra manera de descriure la seva normalitat és pels paràmetres mitjana i desviació estàndard. Molts algoritmes de prova de la normalitat supòsen que les dades s'adapten a la distribució de probabilitat normal mitjançant la desviació estàndard i la mitjana. Aquestes proves, denominades paramètriques, les podem trobar als test _Kolmogorov-Smirnov_ o _Shapiro-Wilk_. Assumeixen la hipòtesi nul·la de que les dades es distribueixen normalment. Si el _p-valor_ es més baix al nivell de significància (assumirem $\alpha=0.05$) es rebutja la hipòtesi nul·la i s'assumeix que la població no segueix una distribució normal.
+
+En el cas de _Age_:
+```{r}
+shapiro.test(titanic$Age)
+```
+Resulta en ditribució no normal. El _p-valor_ és 5.094e-14, molt inferior al nivell de significància.
+
+Provarem amb la variable _Fare_. Primer gràficament:
+```{r}
+ggplot(titanic, aes(x=Fare)) + 
+  geom_histogram(aes(y=..density..), binwidth = 40, colour="black", fill="lightblue")
+```
+Es tracta d'una distribució no normal de cua a la dreta. Ho comprovem amb _Shapiro-Wilk_:
+```{r}
+shapiro.test(titanic$Fare)
+```
+Per últim, revisarem l'atribut _Family Size_:
+```{r}
+ggplot(titanic, aes(x=Family_size)) + 
+  geom_histogram(aes(y=..density..), binwidth = 0.8, colour="black", fill="lightblue")
+```
+Tornem a tenir una distribució no normal de cua a la dreta. Revisem-ho amb el test:
+```{r}
+shapiro.test(titanic$Family_size)
+```
+
+
+#### Homogeneïtat
+Bàsicament, la homogeneitat es tracta de la igualtat de variances entre els grups a comparar. Els algoritmes poden ser el test de _Levene_ si les dades segueixen una distribució normal o bé el test no paramètric de _Fligner-Killeen_ en cas de no normalitat en la mostra. Anàlogament al cas dels tests de normalitat, s'assumeix la hipòtesi nul·la amb un nivell de significància $\alpha=0.05$ i, si el _p-valor_ es superior a aquesta, indicarà que les variances entre els grups son iguales i, per tant, homogènies.
+
+Degut als resultats de les proves de normalitat, s'utilitzarà el test _Fligner-Killeen_. 
+
+Per _Age_:
+```{r}
+library(car)
+fligner.test(as.integer(Survived) ~ Age, data = titanic)
+```
+Es comprova que el _p-valor_ és superior al nivell de significància i, per tant, acceptem la hipòtesi nul·la significant que ambdues mostres són homogènies. 
+
+Per a _Fare_:
+```{r}
+fligner.test(as.integer(Survived) ~ Fare, data = titanic)
+```
+També son homogènies.
+
+Per últim, _Family-size_:
+```{r}
+fligner.test(as.integer(Survived) ~ Family_size, data = titanic)
+```
+El _p-valor_ 0.0009094, menor al nivell de significància, rebutja la hipòtesi nul·la indicant variances estadísticament diferents (hetergoneïtat).
 
 ### Aplicació de proves estadístiques 
-TO-DO: En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents.
+**TO-DO: En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents.**
 
 ## Representació dels resultats
 TO-DO: Taules i gràfiques
