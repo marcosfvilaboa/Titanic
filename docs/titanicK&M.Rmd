@@ -296,9 +296,9 @@ A _Age_ els agrupem en les categoríes _Youth_, _Young Adult_, _Adult_ i _Senior
 ```{r}
 max(titanic$Age)
 titanic$AgeCategorical<-cut(titanic$Age, seq(0,70,5))
-aggregate(titanic[, "Survived"], list(titanic$AgeCategorical), FUN = function(x) c(mean = mean(x), count = length(x) ))
+seeGroupStatics(titanic$Survived, titanic$AgeCategorical)
 titanic$AgeCategorical <- cut(titanic$Age, breaks=c(0, 15, 35, 50, 70), labels=c("Youth","Young Adult","Adult","Senior"))
-aggregate(titanic[, "Survived"], list(titanic$AgeCategorical), FUN = function(x) c(mean = mean(x), count = length(x) ))
+seeGroupStatics(titanic$Survived, titanic$AgeCategorical)
 t_age_youth <- titanic %>% filter(AgeCategorical == "Youth")
 t_age_youngAdult <- titanic %>% filter(AgeCategorical == "Young Adult")
 t_age_adult <- titanic %>% filter(AgeCategorical == "Adult")
