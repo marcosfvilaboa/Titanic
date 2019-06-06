@@ -375,6 +375,55 @@ El _p-valor_ 0.0009094, menor al nivell de significància, rebutja la hipòtesi 
 ### Aplicació de proves estadístiques 
 **TO-DO: En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents.**
 
+#### Correlacions
+Primerament es volen trobar les variables més rellevants i per a fer-ho es compararan totes les variables del nostre dataset amb _Survived_ que és la variable objectiu.
+Per a fer-ho, s'utilitzarà el Pearson’s Chi-squared del qual agafant el _valor de _p.value_ podrem saber si les variables tenen una correlació si és menor de 0.05.
+En aquest cas ens interessen les variables més correlacionadas amb _Survived_ ja que seran les que ens podran explicar millor si aquell individu va o no sobreviure.
+
+```{r}
+for (i in colnames(titanic)[2:8]){
+  pvalue = chisq.test(titanic[i], titanic$Survived)$p.value
+  cat("Pvalue for", i, "vs Survived =", pvalue)
+  cat("\n")
+}
+```
+ On es pot veure que les variables més correlacionadas són _Sex_, _PClass_, i _Title_.
+ 
+ I ara és interessant veure la correlació entre aquestes tres variables
+ 
+```{r}
+ps = chisq.test(titanic$Pclass, titanic$Sex)$p.value
+pt = chisq.test(titanic$Pclass, titanic$Title)$p.value
+st = chisq.test(titanic$Sex, titanic$Title)$p.value
+cormatrix = matrix(c(1, ps, pt,
+                     ps, 1, st,
+                     pt, st, 1), 
+                   3, 3, byrow = TRUE)
+
+row.names(cormatrix) = colnames(cormatrix) = c("Pclass", "Sex", "Title")
+cormatrix
+
+```
+
+Com era d'esperar _Title_ està forçament correlacionada amb _Sex_ i _Pclass_ ja que el títol és molt semblant a la classe i s'ha extès amb el sexe. Així, les variables més valuoses seran _Sex_ i _Pclass_.
+
+#### Regressió
+Donat que en la secció anterior hem trobat les variables que poden ser més valuoses es decideix fer una regressió combinant aquestes dues variables.
+Cal a dir, que després de provar més d'una combinació, aquesta és la més lògica amb un valor de r2 més elevat.
+
+```{r}
+sex_Pclass_lm <- lm(Survived~Sex*Pclass, data=titanic)
+cat("El valor de r2 de la regressió és:", summary(sex_Pclass_lm)$r.squared)
+cat("\n")
+coef(sex_Pclass_lm)
+```
+
+On es pot veure que el valor de r2 no és gaire alt, però és suficient per poder extreure algunes conclusions.
+
+Els homes tenen bastantes menys probabilitats de viure que les dones i malgrat que la classe 2 és la que té menys probabilitat de sobreviure.
+
+En la classe 3 també es difícil sobreviure, tot i que pels homes no hi ha tanta diferència de trobar-se en la classe 2 o 3 com en les dones.
+
 ## Representació dels resultats
 TO-DO: Taules i gràfiques
 
