@@ -126,7 +126,8 @@ seeGroupStatics <- function(resultArray, categoricalArray){
   aggregate(resultArray, list(categoricalArray), FUN = function(x) c(mean = mean(x), count = length(x) ))
 }
 # Pels seguents càlculs la passem a integer tot i ser factor ja que ens interessa la mitja
-titanic$Survived <- as.integer(titanic$Survived)
+#Es resta 1 al convertir-lo a integer ja que els valors passen a ser 1 i 2 al transformar-lo
+titanic$Survived <- as.integer(titanic$Survived)-1
 ## Groups
 
 ### by 'Pclass'
