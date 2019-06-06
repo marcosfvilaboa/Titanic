@@ -258,7 +258,8 @@ write.csv(titanic, "../data/titanic_train_transformed.csv")
 ### Selecció dels grups de dades
 Primer de tot, i com que _Survived_ és la variable de classe i, com a tal de tipus factor, però per als següents càlculs la farem servir com a referència numèrica, la passarem a tipus _integer_.
 ```{r}
-titanic$Survived <- as.integer(titanic$Survived)
+#Es resta 1 al convertir-lo a integer ja que els valors passen a ser 1 i 2 al transformar-lo
+titanic$Survived <- as.integer(titanic$Survived)-1
 ```
 En aquesta secció es preparen els grups dividint-los segons els valors dels diferents atributs i amb la funció _seeGroupStatics_ (creada a continuació) es podrà fer una primer anàlisis.
 ```{r}
