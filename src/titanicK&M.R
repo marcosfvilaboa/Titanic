@@ -209,4 +209,29 @@ fligner.test(as.integer(Survived) ~ Family_size, data = titanic)
 ### presenta varianzas estadísticamente diferentes para Family_size
 
 ## Aplicació de proves estadístiques
+###Correlacions
+####Correlació entre Survived i cada variable
+for (i in colnames(titanic)[2:8]){
+  pvalue = chisq.test(titanic[i], titanic$Survived)$p.value
+  cat("Pvalue for", i, "vs Survived =", pvalue)
+  cat("\n")
+}
 
+####Correlació entre variables TOP
+ps = chisq.test(titanic$Pclass, titanic$Sex)$p.value
+pt = chisq.test(titanic$Pclass, titanic$Title)$p.value
+st = chisq.test(titanic$Sex, titanic$Title)$p.value
+cormatrix = matrix(c(1, ps, pt,
+                     ps, 1, st,
+                     pt, st, 1), 
+                   3, 3, byrow = TRUE)
+
+row.names(cormatrix) = colnames(cormatrix) = c("Pclass", "Sex", "Title")
+cormatrix
+
+
+###Regresions per a les variables TOP
+sex_Pclass_lm <- lm(Survived~Sex*Pclass, data=titanic)
+cat("El valor de r2 de la regressió és:", summary(sex_Pclass_lm)$r.squared)
+cat("\n")
+coef(sex_Pclass_lm)
