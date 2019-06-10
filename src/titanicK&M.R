@@ -212,26 +212,56 @@ fligner.test(as.integer(Survived) ~ Family_size, data = titanic)
 ###Correlacions
 ####Correlació entre Survived i cada variable
 for (i in colnames(titanic)[2:8]){
-  pvalue = chisq.test(titanic[i], titanic$Survived)$p.value
+  pvalue = chisq.test(titanic[i], titanic$Survived, simulate.p.value = TRUE)$p.value
   cat("Pvalue for", i, "vs Survived =", pvalue)
   cat("\n")
 }
-
 ####Correlació entre variables TOP
 ps = chisq.test(titanic$Pclass, titanic$Sex)$p.value
-pt = chisq.test(titanic$Pclass, titanic$Title)$p.value
-st = chisq.test(titanic$Sex, titanic$Title)$p.value
+pt = chisq.test(titanic$Pclass, titanic$Title, simulate.p.value = TRUE)$p.value
+st = chisq.test(titanic$Sex, titanic$Title, simulate.p.value = TRUE)$p.value
 cormatrix = matrix(c(1, ps, pt,
                      ps, 1, st,
-                     pt, st, 1), 
+                     pt, st, 1),
                    3, 3, byrow = TRUE)
 
 row.names(cormatrix) = colnames(cormatrix) = c("Pclass", "Sex", "Title")
 cormatrix
+## Variables no categòriques
+corr_matrix_non_categorical <- matrix(nc = 2, nr = 0)
+colnames(corr_matrix_non_categorical) <- c("estimate", "p-value")
+for (i in 2:(ncol(titanic))) {
+  if (is.integer(titanic[,i]) | is.numeric(titanic[,i])) {
+    pearson_test = cor.test(titanic[,i],
+                             titanic$Survived,
+                             method = "pearson")
+    corr_coef = pearson_test$estimate
+    p_val = pearson_test$p.value
+    # Add row to matrix
+    pair = matrix(ncol = 2, nrow = 1)
+    pair[1][1] = corr_coef
+    pair[2][1] = p_val
+    corr_matrix_non_categorical <- rbind(corr_matrix_non_categorical, pair)
+    rownames(corr_matrix_non_categorical)[nrow(corr_matrix_non_categorical)] <- colnames(titanic)[i]
+  } 
+}
+
+corr_matrix_non_categorical
+## If you find any highly correlated variable, you can also drop of these variables from 
+## your final model as it won’t add lot of new information in the model (In this case none of them)
+# 
 
 
 ###Regresions per a les variables TOP
 sex_Pclass_lm <- lm(Survived~Sex*Pclass, data=titanic)
 cat("El valor de r2 de la regressió és:", summary(sex_Pclass_lm)$r.squared)
-cat("\n")
 coef(sex_Pclass_lm)
+
+#### Contrast d'hipòtesis
+## Provem per sexe
+titanic_male_survived <-  titanic[titanic$Sex == "male",]$Survived
+titanic_female_survived <-  titanic[titanic$Sex == "female",]$Survived
+t.test(titanic_male_survived, titanic_female_survived, alternative = "less")
+
+
+## Representació dels resultats

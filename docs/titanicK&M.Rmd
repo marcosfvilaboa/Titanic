@@ -424,6 +424,11 @@ Els homes tenen bastantes menys probabilitats de viure que les dones i malgrat q
 
 En la classe 3 també es difícil sobreviure, tot i que pels homes no hi ha tanta diferència de trobar-se en la classe 2 o 3 com en les dones.
 
+#### Contrast d'hipòtesis
+$\begin{aligned}
+  H_{0}: \mu_{male} -  \mu_{female} = 0\\
+  H_{1}: \mu_{male} -  \mu_{female} < 0\\
+\end{aligned}$
 ## Representació dels resultats
 TO-DO: Taules i gràfiques
 
