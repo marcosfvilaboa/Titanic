@@ -1,6 +1,6 @@
 ---
 title: "Tipologia i cicle de dades. Pràctica 2"
-author: "Marcos F. Vilaboa & Joaquim Salomon"
+author: "Marcos F. Vilaboa & Joaquín Salomon"
 date: "22 de mayo de 2019"
 output: 
   pdf_document: 
@@ -373,11 +373,12 @@ fligner.test(as.integer(Survived) ~ Family_size, data = titanic)
 El _p-valor_ 0.0009094, menor al nivell de significància, rebutja la hipòtesi nul·la indicant variances estadísticament diferents (hetergoneïtat).
 
 ### Aplicació de proves estadístiques 
-**TO-DO: En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents.**
 
 #### Correlacions
 Primerament es volen trobar les variables més rellevants i per a fer-ho es compararan totes les variables del nostre dataset amb _Survived_ que és la variable objectiu.
-Per a fer-ho, s'utilitzarà el Pearson’s Chi-squared del qual agafant el _valor de _p.value_ podrem saber si les variables tenen una correlació si és menor de 0.05.
+
+Per a fer-ho, s'utilitzarà el Pearson’s Chi-squared del qual agafant el _valor_ de _p.value_ podrem saber si les variables tenen una correlació si és menor de 0.05.
+
 En aquest cas ens interessen les variables més correlacionadas amb _Survived_ ja que seran les que ens podran explicar millor si aquell individu va o no sobreviure.
 
 ```{r}
@@ -429,8 +430,73 @@ $\begin{aligned}
   H_{0}: \mu_{male} -  \mu_{female} = 0\\
   H_{1}: \mu_{male} -  \mu_{female} < 0\\
 \end{aligned}$
-## Representació dels resultats
-TO-DO: Taules i gràfiques
 
-## Resolució del problema
-TO-DO: A partir dels resultats obtinguts, quines són les conclusions? Els resultats permeten respondre al problema?
+## Representació dels resultats
+Ara es desitja fer una primera valoració per a cada atribut en funció dels seus valors i també es poden combinar per a poder fer un anàlisis més profund.
+
+Per a fer-ho, primerament agruparem el _dataset_ segons els atributs més importants.
+
+```{r}
+titanic_by_sex_pclass <- 
+                      summarize(
+                        group_by(titanic, Sex, Pclass), 
+                        Survived = mean(Survived)
+                      )
+
+titanic_by_sex_pclass
+```
+
+En l'anterior plot es pot veure fàcilment com les dones tenen més possibilitats de viure que els homes. També les diferències entre classes, tot i que entre la classe 2 i la 3 la diferència entre homes és menor com ja s'havia pogut observar en la regressió anteriorment.
+
+Per a veure les diferències més clarament es pot fer un gràfic dels resultats
+
+```{r}
+titanic_by_sex_pclass.plot <-ggplot(titanic_by_sex_pclass,aes(x =Pclass,y =Survived,color =Sex,group =Sex))
+
+titanic_by_sex_pclass.plot+geom_point()+geom_line()
+```
+Una de les hipòtesis inicials era que les persones joves sobrevivien més que les grans. Amb això també es pot fer un gràfic per veure si és cert.
+
+```{r}
+titanic_by_age <- 
+                      summarize(
+                        group_by(titanic, AgeCategorical), 
+                        Survived = mean(Survived)
+                      )
+
+titanic_by_age
+
+titanic_by_age.plot <-ggplot(titanic_by_age,aes(x =AgeCategorical,y =Survived))
+
+titanic_by_age.plot+geom_bar(stat="identity", position="identity")
+```
+
+Aquí es pot veure clarament com si que van sobreviure més joves però la diferència en la resta de grups d'edat no és gran.
+
+Aprofitant el gràfic anterior i l'atribut _Title_ es pot fer una altra comparació de la supervivència contrastant el que s'ha fet abans segons _Pclass_ i _Sex_ ja que _Title_ és la combinació d'aquests dos.
+
+```{r}
+titanic_by_title <- 
+                      summarize(
+                        group_by(titanic, Title), 
+                        Survived = mean(Survived)
+                      )
+
+titanic_by_title.plot <-ggplot(titanic_by_title,aes(x =Title,y =Survived))
+
+titanic_by_title.plot+geom_bar(stat="identity", position="identity")
+```
+
+On es pot observar una altra vegada que la nobles o els títol importants tenen més supervivència que els de classes més baixes. També que les dones amb títols de classe alta sobreviuen per sobre d'un 50%.
+
+# Resolució del problema i conclusions
+Tal i com s'havia plantejat en els objectius es volia comprovar quin havia sigut el grup amb més probabilitat de supervivència i quines eren les característiques que feien a un passatger tenir més possibilitats de supervivència.
+
+Així, després de realitzar una neteja de dades únicament utilitzant les dades més rellevants i sense inconsistències es pot arribar a les següents conclusions:
+\begin{itemize}
+\item En relació a l'edat només els joves tenen més possibilitats de sobreviure.
+\item Les dones tenen una probabilitat molt més gran de sobreviure que els homes.
+\item La diferència entre classes és major en dones que en homes, tot i que en els dos casos quan més alta és la classe més possibilitats hi ha de supervivència.
+\end{itemize}
+
+
