@@ -11,25 +11,15 @@ str(titanic.original)
 
 # ---Pre-process---
 ## subsetting skipping 'passangerId', 'Embarked' and 'Ticket' columns from original
-
-#titanic <- titanic.original[, c(2:8, 10, 11)]
 titanic <- titanic.original[,-which(names(titanic.original) %in% c("Embarked","Ticket","PassengerId"))] #Així queda més clar quines columnes es descarten OK
-
-##>>>>>> OK -> Proposo crear l'att Title i no sobrescriure el Name. Despr?s borrem el Name comentant que no té sentit guardar-lo. Ho dic perquè queda més clar què estem fent
 
 ## extract passenger names saving only the titles
 titanic$Title <- as.factor(gsub('(.*, )|(\\..*)', '', titanic$Name))
-titanic["Name"] <- NULL #La variable Name ja no t? cap valor
-
-### change 'Name' column name to 'Title'
-#names(titanic)[names(titanic) == "Name"] <- "Title"
-
-
+titanic["Name"] <- NULL 
 
 ## combines some passenger titles
 ## (from tnikaggle user in kaggle --> https://www.kaggle.com/tysonni/extracting-passenger-titiles-in-r)
 ## and Narcel Reedus September 14, 2017 --> https://rpubs.com/Nreedus/Titanic
-
 #install.packages("dplyr") #<-- If library doesn't be installed previously delete the comment
 library(dplyr)
 levels(titanic$Title)
@@ -54,9 +44,6 @@ titanic %>%
 ### change that row
 titanic <- titanic %>%
   mutate(Title=replace(Title, (Sex == "female" & (Title == "Noble male")), "Noble female"))
-##>>>>>> Em sembla bastant inteligent fer així pero ojo perquè d'alguna manera aquí estem juntant sex + class
-##>>>> La idea d'això és per posar el títol corresponent sogons el sexe per a Doctor-Noble (female-male)
-##>>>> Més aviat estic associant el títol amb el sexe.
 
 # ---Nulls & empties---
 colSums(titanic=="")
@@ -87,23 +74,18 @@ removeOutlierValues <- function(dataset,arrayToCheck) {
 }
 
 
-##'Fare' --> OK
+##'Fare'
 seeOutlierValues(titanic, titanic$Fare)
 
-## 'SibSp' & 'Parch' --> Join in 'Family_size'
-##>>>>>>>> Si els ajuntem no t? molt sentit mirar els outliers per separat
-##>>>> vista la justificació que realitzes al Rmd i em sembla perfecte.
-#seeOutlierValues(titanic, titanic$SibSp) 
-#seeOutlierValues(titanic, titanic$Parch)
+## 'SibSp' & 'Parch'
 titanic$Family_size <- titanic$SibSp + titanic$Parch
 seeOutlierValues(titanic, titanic$Family_size)
-#No treure els Outliers, el que tenen famílies més petites són els que sobreviuen
 
 ### Discard SibSp & Parch
 titanic["SibSp"] <- NULL
 titanic["Parch"] <- NULL
 
-## 'Age' --> Remove outliers
+## 'Age' 
 seeOutlierValues(titanic, titanic$Age)
 titanic <- removeOutlierValues(titanic, titanic$Age)
 
@@ -111,11 +93,6 @@ titanic <- removeOutlierValues(titanic, titanic$Age)
 str(titanic)
 ## change types: Pclass, Survived & Title as factor
 titanic$Survived <- as.factor(titanic$Survived) 
-#>>>> Si l'utilitzem com a int tenim la possibilitat d'utilitzar mean
-#>>>> Tens raó, pot ser interessant. Però Survived és una variable factor.
-#>>>> De fet, es tracta de la variable de classe.
-#>>>> Potser es més "correcte" desar-la com a factor i si cal algun càlcul amb
-#>>>> 'mean' fer-lo amb as.integer
 titanic$Pclass <- as.factor(titanic$Pclass)
 titanic$Title <- as.factor(titanic$Title)
 str(titanic)
@@ -125,11 +102,11 @@ write.csv(titanic, "data/titanic_train_transformed.csv")
 seeGroupStatics <- function(resultArray, categoricalArray){
   aggregate(resultArray, list(categoricalArray), FUN = function(x) c(mean = mean(x), count = length(x) ))
 }
-# Pels seguents càlculs la passem a integer tot i ser factor ja que ens interessa la mitja
-#Es resta 1 al convertir-lo a integer ja que els valors passen a ser 1 i 2 al transformar-lo
+# Change 'Survived' to integer to compute its mean
+# Substract 1 because the values get 1 and 2 in the process
 titanic$Survived <- as.integer(titanic$Survived)-1
-## Groups
 
+## Groups
 ### by 'Pclass'
 levels(titanic$Pclass)
 seeGroupStatics(titanic$Survived, titanic$Pclass)
@@ -164,7 +141,6 @@ t_age_youngAdult <- titanic %>% filter(AgeCategorical == "Young Adult")
 t_age_adult <- titanic %>% filter(AgeCategorical == "Adult")
 t_age_senior <- titanic %>% filter(AgeCategorical == "Senior")
 
-
 ## Normality
 ### GGPlot2 library for plots
 #install.packages("ggplot2") #<-- If library doesn't be installed previously delete the comment
@@ -172,54 +148,38 @@ library(ggplot2)
 ### See normality of 'Age' by plot
 ggplot(titanic, aes(x=Age)) + 
   geom_histogram(aes(y=..density..), binwidth = 6, colour="black", fill="lightblue")
-### Sembla seguir distribució normal
 ### Shapiro test 'Age'
 shapiro.test(titanic$Age)
-### Resulta en ditribució no normal
-### ---> If the p-value > 0.05 implying that the distribution 
-### of the data are not significantly different from normal distribution. 
-### In other words, we can assume the normality. http://www.sthda.com/english/wiki/normality-test-in-r
 ### Normality of 'Fare' by plot
 ggplot(titanic, aes(x=Fare)) + 
   geom_histogram(aes(y=..density..), binwidth = 40, colour="black", fill="lightblue")
-### Distribució no normal amb cua a la dreta
 ### Shapiro test 'Fare'
 shapiro.test(titanic$Fare)
-### Resulta en distribució no normal
 ### Normality of 'Family_size' by plot
 ggplot(titanic, aes(x=Family_size)) + 
   geom_histogram(aes(y=..density..), binwidth = 0.8, colour="black", fill="lightblue")
-### Distribució no normal amb cua a la dreta
 ### Shapiro test 'Family_size'
 shapiro.test(titanic$Family_size)
-### Resulta en distribució no normal
 
 ## homocedasticity
-### --> igualdad de varianzas entre los grupos que se van a comparar
-### test de Levene, cuando los datos siguen una distribución normal, 
-### test de Fligner-Killeen, alternativa no paramétrica, cuando los datos no cumplen con la condición de normalidad
 # install.packages("car") #<-- If library doesn't be installed previously delete the comment
 library(car)
 fligner.test(as.integer(Survived) ~ Age, data = titanic)
-### Puesto que obtenemos un p-valor superior a 0,05, aceptamos la hipótesis de que las varianzas
-### de ambas muestras son homogéneas
 fligner.test(as.integer(Survived) ~ Fare, data = titanic) # <- Homogeneïtat
 fligner.test(as.integer(Survived) ~ Family_size, data = titanic)
-### se rechaza la hipótesis nula de homocedasticidad y se concluye que la variable Survived
-### presenta varianzas estadísticamente diferentes para Family_size
 
-## Aplicació de proves estadístiques
-###Correlacions
-####Correlació entre Survived i cada variable
+## Statistical tests application
+###Correlations
+####Between Survived and the other attributes
 for (i in colnames(titanic)[2:8]){
-  pvalue = chisq.test(titanic[i], titanic$Survived, simulate.p.value = TRUE)$p.value
+  pvalue = chisq.test(titanic[i], titanic$Survived)$p.value
   cat("Pvalue for", i, "vs Survived =", pvalue)
   cat("\n")
 }
-####Correlació entre variables TOP
+####Correlation between TOP attributes
 ps = chisq.test(titanic$Pclass, titanic$Sex)$p.value
-pt = chisq.test(titanic$Pclass, titanic$Title, simulate.p.value = TRUE)$p.value
-st = chisq.test(titanic$Sex, titanic$Title, simulate.p.value = TRUE)$p.value
+pt = chisq.test(titanic$Pclass, titanic$Title)$p.value
+st = chisq.test(titanic$Sex, titanic$Title)$p.value
 cormatrix = matrix(c(1, ps, pt,
                      ps, 1, st,
                      pt, st, 1),
@@ -227,7 +187,7 @@ cormatrix = matrix(c(1, ps, pt,
 
 row.names(cormatrix) = colnames(cormatrix) = c("Pclass", "Sex", "Title")
 cormatrix
-## Variables no categòriques
+## Non categorical attributes
 corr_matrix_non_categorical <- matrix(nc = 2, nr = 0)
 colnames(corr_matrix_non_categorical) <- c("estimate", "p-value")
 for (i in 2:(ncol(titanic))) {
@@ -247,21 +207,45 @@ for (i in 2:(ncol(titanic))) {
 }
 
 corr_matrix_non_categorical
-## If you find any highly correlated variable, you can also drop of these variables from 
-## your final model as it won’t add lot of new information in the model (In this case none of them)
-# 
 
-
-###Regresions per a les variables TOP
+###Regression
+###TOP variables regression
 sex_Pclass_lm <- lm(Survived~Sex*Pclass, data=titanic)
-cat("El valor de r2 de la regressió és:", summary(sex_Pclass_lm)$r.squared)
+cat("r2 regression value:", summary(sex_Pclass_lm)$r.squared)
 coef(sex_Pclass_lm)
 
-#### Contrast d'hipòtesis
-## Provem per sexe
+#### Hypothesis contrast for 'Sex'
 titanic_male_survived <-  titanic[titanic$Sex == "male",]$Survived
 titanic_female_survived <-  titanic[titanic$Sex == "female",]$Survived
 t.test(titanic_male_survived, titanic_female_survived, alternative = "less")
 
 
 ## Representació dels resultats
+###Group by 'Sex' and 'Pclass'
+titanic_by_sex_pclass <- summarize(
+                         group_by(titanic, Sex, Pclass), 
+                         Survived = mean(Survived)
+                         )
+titanic_by_sex_pclass
+####plot
+titanic_by_sex_pclass.plot <-ggplot(titanic_by_sex_pclass,aes(x =Pclass,y =Survived,color =Sex,group =Sex))
+titanic_by_sex_pclass.plot+geom_point()+geom_line()
+###Group by 'Age'
+titanic_by_age <- summarize(
+                  group_by(titanic, AgeCategorical), 
+                  Survived = mean(Survived)
+                  )
+titanic_by_age
+####plot
+titanic_by_age.plot <-ggplot(titanic_by_age,aes(x =AgeCategorical,y =Survived))
+titanic_by_age.plot+geom_bar(stat="identity", position="identity")
+###Group by 'Title' and plot
+titanic_by_title <- summarize(
+                    group_by(titanic, Title), 
+                    Survived = mean(Survived)
+                    )
+titanic_by_title.plot <-ggplot(titanic_by_title,aes(x =Title,y =Survived))
+titanic_by_title.plot+geom_bar(stat="identity", position="identity")
+#### See noble females
+titanic %>%
+  filter(Sex == "female" & Title == "Noble female")

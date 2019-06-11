@@ -30,7 +30,9 @@ En aquesta pràctica s’elabora un cas pràctic orientat a aprendre a identific
 
 ## Competències
 En aquesta pràctica es desenvolupen les següents competències del Màster de Data Science:
+
 - Capacitat d'analitzar un problema en el nivell d'abstracció adequat a cada situació i aplicar les habilitats i coneixements adquirits per abordar-lo i resoldre'l.
+
 - Capacitat per aplicar les tècniques específiques de tractament de dades (integració, transformació, neteja i validació) per al seu posterior anàlisi.
 
 ## Objectius
@@ -99,20 +101,18 @@ L'objectiu principal d'aquest estudi és el de conèixer si aquesta afirmació �
 
 ## Pre-processament
 ### Integració i selecció de les dades
-
 La integració de les dades consisteix a combinar les dades de diferents fonts de dades. En aquest cas, com que ens basem en un *dataset* concret, no serà necessari integrar més fonts. 
 
-En canvi, 
+En canvi, si realitzarem una selecció de les dades que creiem necessàries per a l'anàlisi. Mes endevant les analitzarem amb més deteniment per tal de netejar-les però ja es poden descartar _PassengerId_, _Ticket_ i _Embarked_ perquè no es contemplen útils. L'identificador i el número de bitllet són totalment aleatòris i el lloc a on es va embarcar no té rellevància en l'últim trajecte, a on va col·lisionar, desde Southampton destí New York. 
 ```{r}
 titanic <- titanic.original[,-which(names(titanic.original) %in% c("Embarked","Ticket","PassengerId"))]
 ```
 
 
 ### Neteja de les dades
-
 #### Zeros y elements buits
+En primer lloc, cal comprovar que les dades no continguin elements buits o zeros. Per a fer-ho, primerament ens fixem en la primera mostra de les dades que s'ha pogut veure unes línies més amunt on es pot veure dades que equivalen a valors buits "" i també valors nul·ls representats com NA.
 
-En primer lloc, cal comprovar que les dades no continguin elements buits o zeros. Per a fer-ho, primerament ens fixem en la primera mostra de les dades que s'ha pogut veure unes línies més amunt on es pot veure dades que equivalen a valors buits "" i també valors nul·ls representats com NA. 
 Aleshores, anem a veure quins camps contenen aquestes dades nul·les o buides.
 Per a veure les dades buides executem la següent funció per veure el nombre d'atributs que contenen algun camp buit.
 ```{r}
@@ -120,7 +120,6 @@ colSums(titanic=="")
 ```
 
 I en aquest pas es farà el mateix per a dades nul·les.
-
 ```{r}
 colSums(is.na(titanic))
 ```
@@ -130,21 +129,16 @@ Així doncs, els atributs _Cabin_ i _Age_ contenen dades a tractar.
 Per a l'atribut _Cabin_ veiem que una gran part dels valors de l'atribuit són buits o nul·ls, aleshores s'haurà de prescindir d'aquest atribuit ja que no pot aportar cap informació rellevant.
 
 Eliminem l'atribut.
-
 ```{r}
 titanic["Cabin"] <- NULL
 ```
 
-
 Per últim, els valors nul·ls de l'atribut _Age_ els substituim per la mitjana dels valors no nul·ls:
-
 ```{r}
 titanic$Age[is.na(titanic$Age)] <- mean(titanic$Age,na.rm=T)
 ```
 
-
 #### Valors extrems
-
 A continuació creem una funció per a trobar els valors extrems dins dels atributs numèrics i una altra per esobrrar-los en cas que sigui necessari. En aquest cas concret en tenim quatre: _Age_, _SibSp_, _Parch_ i _Fare_
 ```{r}
 seeOutlierValues <- function(dataset,arrayToCheck) {
@@ -172,7 +166,6 @@ removeOutlierValues <- function(dataset,arrayToCheck) {
 Primerament, es miren els outliers per a cada variable i després de fer una valoració es decideix borrar-los o mantenir-los.
 
 En el case de _Fare_ com es pot veure a continuació els outliers, considerant outliers els valors que estan a més de tres desviacions estàndard de la mitja, no són discordants. Per tant, no es veu la necessitat d'esborrar-los.
-
 ```{r}
 seeOutlierValues(titanic, titanic$Fare)
 ```
@@ -182,6 +175,7 @@ Per les variables _SibSP_ i _Parch_ es decideix unir les variables, ja que tots 
 titanic$Family_size <- titanic$SibSp + titanic$Parch
 seeOutlierValues(titanic, titanic$Family_size)
 ```
+
 Descartem els atributs origen:
 ```{r}
 titanic["SibSp"] <- NULL
@@ -195,14 +189,16 @@ titanic <- removeOutlierValues(titanic, titanic$Age)
 ```
 
 #### Transformació de les variables
-En aquest cas, l'atribut _Name_ pot tenir algun valor, ja que en aquesta s'hi pot trobar el títol de la persona. Així, es decideix extreure aquest títol del nom 
+En aquest cas, l'atribut _Name_ pot tenir algun valor, ja que en aquesta s'hi pot trobar el títol de la persona. Així, es decideix extreure aquest títol del nom:
 ```{r}
 titanic$Title <- as.factor(gsub('(.*, )|(\\..*)', '', titanic$Name))
 ```
+
 i conservar només el nou atribut _Title_ derivat de _Name_.
 ```{r}
 titanic["Name"] <- NULL #La variable Name ja no té cap valor
 ```
+
 S'unifiquen valors per reduir la grandària del grup
 ```{r}
 library(dplyr)
@@ -217,6 +213,7 @@ titles_lookup <- data.frame(Title = c("Capt", "Col", "Don", "Dr", "Jonkheer", "M
                                           "Mrs", "Miss"),
                             stringsAsFactors = FALSE)
 ```
+
 S'inclouen en el dataset
 ```{r}
 titanic <- titanic %>%
@@ -226,12 +223,14 @@ titanic <- titanic %>%
   mutate(Title = New.Title) %>%
   select(-New.Title)
 ```
+
 i es visualitzen possibles errors de sexe en el títol
 ```{r}
 titanic %>%
   filter((Sex == "female" & (Title == "Noble male" | Title == "Mr" | Title == "Master") |
            (Sex == "male" & (Title == "Noble female" | Title == "Mrs" | Title == "Miss"))))
 ```
+
 Com es pot veure, ha detectat una dona com a _Noble male_ i la corregim:
 ```{r}
 titanic <- titanic %>%
@@ -245,28 +244,26 @@ titanic$Pclass <- as.factor(titanic$Pclass)
 titanic$Title <- as.factor(titanic$Title)
 ```
 
-
 ### Exportació de les dades preprocessades
 Un cop transformat el dataset s'exporta en un ".csv"
-
 ```{r}
 write.csv(titanic, "../data/titanic_train_transformed.csv")
 ```
 
 ## Anàlisi de les dades
-
 ### Selecció dels grups de dades
 Primer de tot, i com que _Survived_ és la variable de classe i, com a tal de tipus factor, però per als següents càlculs la farem servir com a referència numèrica, la passarem a tipus _integer_.
 ```{r}
-#Es resta 1 al convertir-lo a integer ja que els valors passen a ser 1 i 2 al transformar-lo
 titanic$Survived <- as.integer(titanic$Survived)-1
 ```
+
 En aquesta secció es preparen els grups dividint-los segons els valors dels diferents atributs i amb la funció _seeGroupStatics_ (creada a continuació) es podrà fer una primer anàlisis.
 ```{r}
 seeGroupStatics <- function(resultArray, categoricalArray){
   aggregate(resultArray, list(categoricalArray), FUN = function(x) c(mean = mean(x), count = length(x) ))
 }
 ```
+
 Una de les agrupacions és a partir de la variable _Pclass_ a on podem categoritzar els passatgers segons si van embarcar amb 1a, 2a o 3a classe.
 ```{r}
 levels(titanic$Pclass)
@@ -275,6 +272,7 @@ t_pclass_1 <- titanic %>% filter(Pclass == "1")
 t_pclass_2 <- titanic %>% filter(Pclass == "2")
 t_pclass_3 <- titanic %>% filter(Pclass == "3")
 ```
+
 La següent es _Title_ 
 ```{r}
 levels(titanic$Title)
@@ -286,6 +284,7 @@ t_title_Mrs <- titanic %>% filter(Title == "Mrs")
 t_title_Noble_female <- titanic %>% filter(Title == "Noble female")
 t_title_Noble_male <- titanic %>% filter(Title == "Noble male")
 ```
+
 Per _Sex_:
 ```{r}
 levels(titanic$Sex)
@@ -293,6 +292,7 @@ seeGroupStatics(titanic$Survived, titanic$Sex)
 t_sex_male <- titanic %>% filter(Sex == "male")
 t_sex_female <- titanic %>% filter(Sex == "female")
 ```
+
 A _Age_ els agrupem en les categoríes _Youth_, _Young Adult_, _Adult_ i _Senior_, segons si tenen de 0 a 15 anys, de 16 a 35, de 36 a 50 i de 51 a 70 respectivament.
 ```{r}
 max(titanic$Age)
@@ -306,11 +306,12 @@ t_age_adult <- titanic %>% filter(AgeCategorical == "Adult")
 t_age_senior <- titanic %>% filter(AgeCategorical == "Senior")
 ```
 
-
 ### Comprovació de la normalitat i homogeneïtat de la variància
 #### Normalitat
 Comprovar si les dades segueixen una distribució normal es pot realitzar de diverses maneres. Es pot comprovar gràficament si segueix una corba en forma de campana. Es a dir la probabilitat d'obtenir una observació serà més alta al centre de la corba mentres que disminueix a mesura que ens allunyem del mig. 
+
 Farem servir la llibreria _ggplot2_ per visualitzar l'histograma de les variables numèriques.
+
 Per exemple, per al cas de la variable _Age_:
 ```{r}
 library(ggplot2)
@@ -318,6 +319,7 @@ library(ggplot2)
 ggplot(titanic, aes(x=Age)) + 
   geom_histogram(aes(y=..density..), binwidth = 6, colour="black", fill="lightblue")
 ```
+
 A simple vista, sembla seguir una distribució normal.
 
 Una altra manera de descriure la seva normalitat és pels paràmetres mitjana i desviació estàndard. Molts algoritmes de prova de la normalitat supòsen que les dades s'adapten a la distribució de probabilitat normal mitjançant la desviació estàndard i la mitjana. Aquestes proves, denominades paramètriques, les podem trobar als test _Kolmogorov-Smirnov_ o _Shapiro-Wilk_. Assumeixen la hipòtesi nul·la de que les dades es distribueixen normalment. Si el _p-valor_ es més baix al nivell de significància (assumirem $\alpha=0.05$) es rebutja la hipòtesi nul·la i s'assumeix que la població no segueix una distribució normal.
@@ -326,6 +328,7 @@ En el cas de _Age_:
 ```{r}
 shapiro.test(titanic$Age)
 ```
+
 Resulta en ditribució no normal. El _p-valor_ és 5.094e-14, molt inferior al nivell de significància.
 
 Provarem amb la variable _Fare_. Primer gràficament:
@@ -333,23 +336,27 @@ Provarem amb la variable _Fare_. Primer gràficament:
 ggplot(titanic, aes(x=Fare)) + 
   geom_histogram(aes(y=..density..), binwidth = 40, colour="black", fill="lightblue")
 ```
+
 Es tracta d'una distribució no normal de cua a la dreta. Ho comprovem amb _Shapiro-Wilk_:
 ```{r}
 shapiro.test(titanic$Fare)
 ```
+
 Per últim, revisarem l'atribut _Family Size_:
 ```{r}
 ggplot(titanic, aes(x=Family_size)) + 
   geom_histogram(aes(y=..density..), binwidth = 0.8, colour="black", fill="lightblue")
 ```
+
 Tornem a tenir una distribució no normal de cua a la dreta. Revisem-ho amb el test:
 ```{r}
 shapiro.test(titanic$Family_size)
 ```
 
-
 #### Homogeneïtat
-Bàsicament, la homogeneitat es tracta de la igualtat de variances entre els grups a comparar. Els algoritmes poden ser el test de _Levene_ si les dades segueixen una distribució normal o bé el test no paramètric de _Fligner-Killeen_ en cas de no normalitat en la mostra. Anàlogament al cas dels tests de normalitat, s'assumeix la hipòtesi nul·la amb un nivell de significància $\alpha=0.05$ i, si el _p-valor_ es superior a aquesta, indicarà que les variances entre els grups son iguales i, per tant, homogènies.
+Bàsicament, la homogeneitat es tracta de la igualtat de variances entre els grups a comparar. Els algoritmes poden ser el test de _Levene_ si les dades segueixen una distribució normal o bé el test no paramètric de _Fligner-Killeen_ en cas de no normalitat en la mostra. 
+
+Anàlogament al cas dels tests de normalitat, s'assumeix la hipòtesi nul·la amb un nivell de significància $\alpha=0.05$ i, si el _p-valor_ es superior a aquesta, indicarà que les variances entre els grups son iguales i, per tant, homogènies.
 
 Degut als resultats de les proves de normalitat, s'utilitzarà el test _Fligner-Killeen_. 
 
@@ -358,29 +365,30 @@ Per _Age_:
 library(car)
 fligner.test(as.integer(Survived) ~ Age, data = titanic)
 ```
+
 Es comprova que el _p-valor_ és superior al nivell de significància i, per tant, acceptem la hipòtesi nul·la significant que ambdues mostres són homogènies. 
 
 Per a _Fare_:
 ```{r}
 fligner.test(as.integer(Survived) ~ Fare, data = titanic)
 ```
+
 També son homogènies.
 
 Per últim, _Family-size_:
 ```{r}
 fligner.test(as.integer(Survived) ~ Family_size, data = titanic)
 ```
+
 El _p-valor_ 0.0009094, menor al nivell de significància, rebutja la hipòtesi nul·la indicant variances estadísticament diferents (hetergoneïtat).
 
 ### Aplicació de proves estadístiques 
-
 #### Correlacions
 Primerament es volen trobar les variables més rellevants i per a fer-ho es compararan totes les variables del nostre dataset amb _Survived_ que és la variable objectiu.
 
 Per a fer-ho, s'utilitzarà el Pearson’s Chi-squared del qual agafant el _valor_ de _p.value_ podrem saber si les variables tenen una correlació si és menor de 0.05.
 
 En aquest cas ens interessen les variables més correlacionadas amb _Survived_ ja que seran les que ens podran explicar millor si aquell individu va o no sobreviure.
-
 ```{r}
 for (i in colnames(titanic)[2:8]){
   pvalue = chisq.test(titanic[i], titanic$Survived)$p.value
@@ -388,10 +396,10 @@ for (i in colnames(titanic)[2:8]){
   cat("\n")
 }
 ```
- On es pot veure que les variables més correlacionadas són _Sex_, _PClass_, i _Title_.
+
+On es pot veure que les variables més correlacionadas són _Sex_, _PClass_, i _Title_.
  
- I ara és interessant veure la correlació entre aquestes tres variables
- 
+I ara és interessant veure la correlació entre aquestes tres variables. 
 ```{r}
 ps = chisq.test(titanic$Pclass, titanic$Sex)$p.value
 pt = chisq.test(titanic$Pclass, titanic$Title)$p.value
@@ -400,7 +408,6 @@ cormatrix = matrix(c(1, ps, pt,
                      ps, 1, st,
                      pt, st, 1), 
                    3, 3, byrow = TRUE)
-
 row.names(cormatrix) = colnames(cormatrix) = c("Pclass", "Sex", "Title")
 cormatrix
 
@@ -408,86 +415,131 @@ cormatrix
 
 Com era d'esperar _Title_ està forçament correlacionada amb _Sex_ i _Pclass_ ja que el títol és molt semblant a la classe i s'ha extès amb el sexe. Així, les variables més valuoses seran _Sex_ i _Pclass_.
 
-#### Regressió
-Donat que en la secció anterior hem trobat les variables que poden ser més valuoses es decideix fer una regressió combinant aquestes dues variables.
-Cal a dir, que després de provar més d'una combinació, aquesta és la més lògica amb un valor de r2 més elevat.
+Farem un segon repàs de les variables no categòriques mitjançant Pearson
+```{r}
+corr_matrix_non_categorical <- matrix(nc = 2, nr = 0)
+colnames(corr_matrix_non_categorical) <- c("estimate", "p-value")
+for (i in 2:(ncol(titanic))) {
+  if (is.integer(titanic[,i]) | is.numeric(titanic[,i])) {
+    pearson_test = cor.test(titanic[,i],
+                             titanic$Survived,
+                             method = "pearson")
+    corr_coef = pearson_test$estimate
+    p_val = pearson_test$p.value
+    # Add row to matrix
+    pair = matrix(ncol = 2, nrow = 1)
+    pair[1][1] = corr_coef
+    pair[2][1] = p_val
+    corr_matrix_non_categorical <- rbind(corr_matrix_non_categorical, pair)
+    rownames(corr_matrix_non_categorical)[nrow(corr_matrix_non_categorical)] <- colnames(titanic)[i]
+  } 
+}
+corr_matrix_non_categorical
+```
 
+Com es pot comprovar a la matriu resultant, no existeixen importants correlacions entre _Age_, _Fare_ i _Family size_ amb _Survived_. Cap d'elles es troben pròximes als valors -1 i +1.
+
+#### Regressió
+Donat que en la secció anterior hem trobat les variables que poden ser més valuoses, es decideix fer una regressió combinant aquestes dues variables.
+Val a dir, que després de provar més d'una combinació, aquesta és la més lògica amb un valor de r2 més elevat.
 ```{r}
 sex_Pclass_lm <- lm(Survived~Sex*Pclass, data=titanic)
-cat("El valor de r2 de la regressió és:", summary(sex_Pclass_lm)$r.squared)
-cat("\n")
+cat("r2 regression value:", summary(sex_Pclass_lm)$r.squared)
 coef(sex_Pclass_lm)
 ```
 
 On es pot veure que el valor de r2 no és gaire alt, però és suficient per poder extreure algunes conclusions.
 
-Els homes tenen bastantes menys probabilitats de viure que les dones i malgrat que la classe 2 és la que té menys probabilitat de sobreviure.
+Els homes tenen bastantes menys probabilitats de viure que les dones, malgrat que la classe 2, és la que té menys probabilitat de sobreviure.
 
-En la classe 3 també es difícil sobreviure, tot i que pels homes no hi ha tanta diferència de trobar-se en la classe 2 o 3 com en les dones.
+En la classe 3 també es difícil sobreviure, tot i que pels homes no hi ha tanta diferència de trobar-se en la classe 2 o 3 com les dones.
 
 #### Contrast d'hipòtesis
-$\begin{aligned}
+Finalment, realitzarem un contrast d'hipòtesis. S'utilitzarà la variable _Sex_ per determinar si el sexe del passatger -home o dona- influeix en en el fet de sobreviure.
+
+Separarem les dues mostres depenent del sexe. 
+```{r}
+titanic_male_survived <-  titanic[titanic$Sex == "male",]$Survived
+titanic_female_survived <-  titanic[titanic$Sex == "female",]$Survived
+```
+
+Com que el nombre de dades de la mostra ( més de 700 observacions) és superior a 30, no serà necessari que existeixi normalitat. Així, el següent càlcul paramètric és vàlid.
+
+Plantegem el contrast paramètric d'hipòtests de dos mostres sobre la diferència de les mitjes:
+
+
+$$
+\begin{aligned}
   H_{0}: \mu_{male} -  \mu_{female} = 0\\
   H_{1}: \mu_{male} -  \mu_{female} < 0\\
-\end{aligned}$
+\end{aligned}
+$$
+
+On $\mu_{male}$ és la mitja en els homes i $\mu_{female}$ el de les dones i assumirem $\alpha=0.05$.
+```{r}
+t.test(titanic_male_survived, titanic_female_survived, alternative = "less")
+```
+
+Es comprova que el _p-valor_ és menor al nivell de significació així que es pot refusar la hipòtesi nul·la i, per tant, podem concloure que el fet de ser dona si ajuda a sobreviure.
 
 ## Representació dels resultats
 Ara es desitja fer una primera valoració per a cada atribut en funció dels seus valors i també es poden combinar per a poder fer un anàlisis més profund.
 
 Per a fer-ho, primerament agruparem el _dataset_ segons els atributs més importants.
-
 ```{r}
-titanic_by_sex_pclass <- 
-                      summarize(
-                        group_by(titanic, Sex, Pclass), 
-                        Survived = mean(Survived)
-                      )
-
+titanic_by_sex_pclass <- summarize(
+                         group_by(titanic, Sex, Pclass), 
+                         Survived = mean(Survived)
+                         )
 titanic_by_sex_pclass
 ```
 
-En l'anterior plot es pot veure fàcilment com les dones tenen més possibilitats de viure que els homes. També les diferències entre classes, tot i que entre la classe 2 i la 3 la diferència entre homes és menor com ja s'havia pogut observar en la regressió anteriorment.
+En l'anterior taula es pot veure fàcilment com les dones tenen més possibilitats de viure que els homes. També les diferències entre classes, tot i que entre la classe 2 i la 3 la diferència entre homes és menor com ja s'havia pogut observar en la regressió anteriorment.
 
-Per a veure les diferències més clarament es pot fer un gràfic dels resultats
-
+Per a veure les diferències més clarament es pot fer un gràfic dels resultats:
 ```{r}
 titanic_by_sex_pclass.plot <-ggplot(titanic_by_sex_pclass,aes(x =Pclass,y =Survived,color =Sex,group =Sex))
-
 titanic_by_sex_pclass.plot+geom_point()+geom_line()
 ```
+
 Una de les hipòtesis inicials era que les persones joves sobrevivien més que les grans. Amb això també es pot fer un gràfic per veure si és cert.
-
 ```{r}
-titanic_by_age <- 
-                      summarize(
-                        group_by(titanic, AgeCategorical), 
-                        Survived = mean(Survived)
-                      )
-
+titanic_by_age <- summarize(
+                  group_by(titanic, AgeCategorical), 
+                  Survived = mean(Survived)
+                  )
 titanic_by_age
+```
 
+Queda patent la importància de trobar-se en la franja d'edat entre 0 i 15 anys.
+
+Ho representem:
+```{R}
 titanic_by_age.plot <-ggplot(titanic_by_age,aes(x =AgeCategorical,y =Survived))
-
 titanic_by_age.plot+geom_bar(stat="identity", position="identity")
 ```
 
-Aquí es pot veure clarament com si que van sobreviure més joves però la diferència en la resta de grups d'edat no és gran.
+Van tenir més possibilitats de sobreviure els més joves però la diferència en la resta de grups d'edat no és gran.
 
 Aprofitant el gràfic anterior i l'atribut _Title_ es pot fer una altra comparació de la supervivència contrastant el que s'ha fet abans segons _Pclass_ i _Sex_ ja que _Title_ és la combinació d'aquests dos.
-
 ```{r}
-titanic_by_title <- 
-                      summarize(
-                        group_by(titanic, Title), 
-                        Survived = mean(Survived)
-                      )
-
+titanic_by_title <- summarize(
+                    group_by(titanic, Title), 
+                    Survived = mean(Survived)
+                    )
 titanic_by_title.plot <-ggplot(titanic_by_title,aes(x =Title,y =Survived))
-
 titanic_by_title.plot+geom_bar(stat="identity", position="identity")
 ```
 
-On es pot observar una altra vegada que la nobles o els títol importants tenen més supervivència que els de classes més baixes. També que les dones amb títols de classe alta sobreviuen per sobre d'un 50%.
+On es pot observar una altra vegada que la noblesa o els títol importants tenen més possibilitats de supervivència que les classes més baixes. També s'extreu que les dones amb títols de classe alta van sobreviure totes.
+
+Revisem aquestes últimes com a curiositat:
+```{r}
+titanic %>%
+  filter(Sex == "female" & Title == "Noble female")
+```
+
+Veiem que la majoria es tracta de dones menors de 35 anys, de primera classe i sense familia a bord.
 
 # Resolució del problema i conclusions
 Tal i com s'havia plantejat en els objectius es volia comprovar quin havia sigut el grup amb més probabilitat de supervivència i quines eren les característiques que feien a un passatger tenir més possibilitats de supervivència.
@@ -498,5 +550,3 @@ Així, després de realitzar una neteja de dades únicament utilitzant les dades
 \item Les dones tenen una probabilitat molt més gran de sobreviure que els homes.
 \item La diferència entre classes és major en dones que en homes, tot i que en els dos casos quan més alta és la classe més possibilitats hi ha de supervivència.
 \end{itemize}
-
-
