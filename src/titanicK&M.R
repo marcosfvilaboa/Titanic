@@ -249,3 +249,14 @@ titanic_by_title.plot+geom_bar(stat="identity", position="identity")
 #### See noble females
 titanic %>%
   filter(Sex == "female" & Title == "Noble female")
+
+# Contributions
+library(knitr)
+contrib_table <- matrix(c("MFV, ", "MFV, ", "MFV, "), 3, 2, byrow = TRUE)
+row.names(contrib_table) <- c("Investigació prèvia","Redacció de les respostes","Desenvolupament codi")
+kable( contrib_table , caption = "Contribucions dels integrants"
+       , col.names = c("Contribucions", "Firma")
+       , row.names = TRUE
+       , digits = 1
+       , format.args = list( decimal.mark = ",")
+)
