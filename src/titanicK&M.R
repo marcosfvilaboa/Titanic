@@ -252,7 +252,7 @@ titanic %>%
 
 # Contributions
 library(knitr)
-contrib_table <- matrix(c("MFV, ", "MFV, ", "MFV, "), 3, 2, byrow = TRUE)
+contrib_table <- matrix(c("MFV, JSS", "MFV, JSS", "MFV, JSS"), 3, 2, byrow = TRUE)
 row.names(contrib_table) <- c("Investigació prèvia","Redacció de les respostes","Desenvolupament codi")
 kable( contrib_table , caption = "Contribucions dels integrants"
        , col.names = c("Contribucions", "Firma")
